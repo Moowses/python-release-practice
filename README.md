@@ -39,14 +39,26 @@ It does not verify a real database's migration history or authorize deployment.
 
 ## Windows Server (PowerShell)
 
-Install Git and Python 3 with **Add to PATH** enabled. Open PowerShell:
+Install Git and Python 3 with **Add to PATH** enabled. Use a separate practice folder:
 
 ```powershell
-git clone https://github.com/Moowses/python-release-practice.git
-cd python-release-practice
-$releaseCommit = (git rev-parse HEAD).Trim()
-$previousCommit = (git rev-parse 'HEAD^').Trim()
-python scripts/releases/plan_release.py --commit $releaseCommit --previous-commit $previousCommit --output artifacts/windows-plan.json
+git clone https://github.com/Moowses/python-release-practice.git C:\Practice\python-release-practice
+cd C:\Practice\python-release-practice
+python scripts/windows/update_practice.py --watch
 ```
 
-Use a new output filename for another run.
+Checks GitHub every 15 minutes while the window stays open. Press **Ctrl+C** to stop.
+
+For one update only:
+
+```powershell
+python scripts/windows/update_practice.py
+```
+
+It updates this practice clone only. Local edits or different history stop the update.
+It never runs migrations, installs packages or restarts services.
+
+**Simple explanation:** GitHub stores the latest files. This script downloads them
+into a separate practice folder. Downloading files does not run them.
+
+**Demo:** Commit a README change on GitHub. The Windows copy updates on the next check.
