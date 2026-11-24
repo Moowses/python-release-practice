@@ -1,0 +1,46 @@
+name: Release practice
+
+on:
+  workflow_dispatch:
+    inputs:
+      previous_commit:
+        description: Optional full commit SHA; leave blank to use the parent commit
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run tests
+        run: python3 -B -m unittest discover -s tests/release_practice -p 'test_*.py' -v
+      - name: Create release plan
+        env:
+          RELEASE_COMMIT: ${{ github.sha }}
+          PREVIOUS_COMMIT: ${{ inputs.previous_commit }}
+        run: |
+          if [ -z "$PREVIOUS_COMMIT" ]; then
+            PREVIOUS_COMMIT="$(git rev-parse "$RELEASE_COMMIT^")"
+          fi
+          python3 -B scripts/releases/plan_release.py \
+            --commit "$RELEASE_COMMIT" \
+            --previous-commit "$PREVIOUS_COMMIT" \
+            --target practice \
+            --output artifacts/plan.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-plan-${{ github.sha }}
+          path: artifacts/plan.json
+          if-no-files-found: error
+          retention-days: 14
